@@ -1,0 +1,16 @@
+{
+  "system": "COLONPATH-AI",
+  "version": "1.0.0",
+  "recommended_architecture": "Client-Server (FastAPI REST API)",
+  "api_base_url_emulator": "http://10.0.2.2:8080",
+  "api_base_url_device": "http://<SERVER_IP>:8080",
+  "files": {
+    "ANDROID_API_SPECIFICATION.md": "Complete REST API contract, request/response JSON schemas, and 10-screen UI/UX workflow",
+    "sample_case_result.json": "Example output from POST /analyze and GET /cases/{id}/result",
+    "best_classifier.pth": "PyTorch weights for MultimodalFusionNet (9-class + binary)",
+    "multimodal_classifier_mobile.pt": "TorchScript model for Android PyTorch Mobile",
+    "normalization_params.json": "Morphology feature scaling parameters (means & stds)",
+    "calibration_temperature.json": "Confidence calibration temperature parameter",
+    "unet_gland_model.pth": "U-Net gland segmentation checkpoint"
+  }
+}

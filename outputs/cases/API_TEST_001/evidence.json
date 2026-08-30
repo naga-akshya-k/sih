@@ -1,0 +1,24 @@
+{
+  "case_id": "API_TEST_001",
+  "timestamp": "2026-08-30T13:37:37.610290+00:00",
+  "prediction_class": "LYM",
+  "prediction_confidence": 1.0,
+  "calibrated_confidence": 1.0,
+  "tumor_probability": 0.0,
+  "uncertainty_score": 0.0,
+  "uncertainty_level": "LOW",
+  "agreement_level": "LOW",
+  "nuclear_total_count": 117,
+  "nuclear_mean_area_px2": 138.53,
+  "gland_total_count": 2,
+  "gland_mean_circularity": 0.367,
+  "reference_top_category": "adenocarcinoma",
+  "reference_top_similarity_percent": 100.0,
+  "priority_regions_count": 4,
+  "region_ids": [
+    "R_03",
+    "R_01",
+    "R_02",
+    "R_04"
+  ]
+}

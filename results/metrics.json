@@ -1,0 +1,17 @@
+{
+  "dataset_samples_evaluated": 45,
+  "multiclass_accuracy": 0.6444444444444445,
+  "multiclass_balanced_accuracy": 0.5046296296296297,
+  "multiclass_macro_precision": 0.6129629629629629,
+  "multiclass_macro_recall": 0.5046296296296297,
+  "multiclass_macro_f1": 0.5040650406504065,
+  "multiclass_weighted_f1": 0.6420957542908763,
+  "binary_tumor_accuracy": 1.0,
+  "binary_tumor_precision": 0.0,
+  "binary_tumor_recall_sensitivity": 0.0,
+  "binary_tumor_specificity": 1.0,
+  "binary_tumor_f1": 0.0,
+  "expected_calibration_error_ece": 0.15696918037202623,
+  "brier_score": 0.4965639684638399,
+  "macro_auroc": null
+}

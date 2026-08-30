@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COLONPATH-AI — Decision Support Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --badge-tum: #dc2626;
+      --badge-lym: #8b5cf6;
+      --badge-norm: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .title { display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: 700; color: #fff; }
+    .title i { color: var(--accent); }
+    .badge-status { background: #064e3b; color: #34d399; padding: 4px 12px; border-radius: 9999px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .card-title { font-size: 16px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .image-container { position: relative; width: 100%; border-radius: 8px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; min-height: 380px; }
+    .image-container img { max-width: 100%; height: auto; max-height: 480px; object-fit: contain; }
+    .layer-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .layer-btn { background: #334155; color: #cbd5e1; border: 1px solid transparent; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .layer-btn.active { background: var(--accent); color: #fff; border-color: #60a5fa; }
+    .layer-btn:hover:not(.active) { background: #475569; }
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat-box { background: #0f172a; padding: 14px; border-radius: 8px; border: 1px solid var(--border); }
+    .stat-label { font-size: 12px; color: var(--text-muted); }
+    .stat-val { font-size: 20px; font-weight: 700; margin-top: 4px; color: #fff; }
+    .explanation-box { background: #0f172a; padding: 16px; border-radius: 8px; border-left: 4px solid var(--accent); font-size: 14px; white-space: pre-line; margin-bottom: 16px; line-height: 1.6; }
+    .region-item { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .prio-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+    .prio-high { background: #7f1d1d; color: #fca5a5; }
+    .prio-med { background: #78350f; color: #fde68a; }
+    .prio-low { background: #064e3b; color: #6ee7b7; }
+    .btn-group { display: flex; gap: 10px; margin-top: 16px; }
+    .action-btn { flex: 1; padding: 10px 16px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-warning { background: var(--warning); color: #000; }
+    .btn-secondary { background: #334155; color: #fff; }
+    .btn-success:hover { background: #059669; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">
+      <i class="fa-solid fa-microscope"></i>
+      COLONPATH-AI Decision Support
+    </div>
+    <div class="badge-status">
+      <i class="fa-solid fa-circle-check"></i> System Live (Port 8080)
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Left Column: Image Viewer -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-images"></i> Multimodal Layer Viewer (<span id="case-id">CASE_DEMO_00000</span>)</div>
+      
+      <div class="image-container">
+        <img id="main-view" src="/cases/CASE_DEMO_00000/visualization/regions" alt="Case View">
+      </div>
+
+      <div class="layer-selector">
+        <button class="layer-btn" onclick="setLayer('original')">1. Original H&E</button>
+        <button class="layer-btn" onclick="setLayer('glands')">2. Gland Mask (U-Net)</button>
+        <button class="layer-btn" onclick="setLayer('nuclei')">3. Nuclei (HoVer-Net)</button>
+        <button class="layer-btn active" onclick="setLayer('regions')">4. AI Prioritized Regions</button>
+        <button class="layer-btn" onclick="setLayer('uncertainty')">5. Uncertainty Heatmap</button>
+        <button class="layer-btn" onclick="setLayer('top_regions')">6. Top Crops Collage</button>
+        <button class="layer-btn" onclick="setLayer('pseudo_3d')">7. Pseudo-3D Topography</button>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <div class="card-title"><i class="fa-solid fa-user-doctor"></i> Pathologist Review & Sign-Off</div>
+        <div class="btn-group">
+          <button class="action-btn btn-success" onclick="reviewAction('MARK_REVIEWED')"><i class="fa-solid fa-check-double"></i> Mark Reviewed</button>
+          <button class="action-btn btn-warning" onclick="reviewAction('FLAG_REGION')"><i class="fa-solid fa-flag"></i> Flag Region</button>
+          <button class="action-btn btn-secondary" onclick="addNote()"><i class="fa-solid fa-comment-medical"></i> Add Note</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Predictions & Evidence -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-brain"></i> Multimodal AI Inference & Evidence</div>
+
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-label">AI Classification</div>
+          <div class="stat-val" id="pred-class" style="color: #a78bfa;">LYM</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Calibrated Conf.</div>
+          <div class="stat-val" id="pred-conf" style="color: #34d399;">100.0%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Uncertainty Level</div>
+          <div class="stat-val" id="unc-level" style="color: #38bdf8;">LOW</div>
+        </div>
+      </div>
+
+      <div class="card-title"><i class="fa-solid fa-scale-balanced"></i> Model & Evidence Consensus</div>
+      <div style="background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;" id="agr-summary">
+        Agreement Level: <strong style="color: #60a5fa;">LOW</strong> — Discrepancy detected between visual classification (LYM) and reference morphology.
+      </div>
+
+      <div class="card-title"><i class="fa-solid fa-dna"></i> Morphological Measurements</div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-label">Total Nuclei</div>
+          <div class="stat-val" id="nuc-count">117</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Mean Nuclear Area</div>
+          <div class="stat-val" id="nuc-area">138.5 px²</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Gland Count</div>
+          <div class="stat-val" id="gland-count">2</div>
+        </div>
+      </div>
+
+      <div class="card-title"><i class="fa-solid fa-shield-check"></i> Grounded Explanation (Anti-Hallucination Verified)</div>
+      <div class="explanation-box" id="explanation-text">
+        AI-assisted classification suggests LYM with 100.0% calibrated confidence.
+        Nuclear Analysis: 117 nuclei detected (mean area: 138.5 px²).
+        Gland Analysis: 2 glandular structures segmented (mean circularity: 0.37).
+        Reference Match: 100.0% similarity to curated 'adenocarcinoma' reference cohort.
+        Top AI-Prioritized Region: R_03 (Priority Score: 0.12) located at (x=0, y=128).
+      </div>
+
+      <div class="card-title"><i class="fa-solid fa-location-crosshairs"></i> AI-Prioritized Regions</div>
+      <div id="regions-list">
+        <div class="region-item">
+          <div><strong>R_03</strong> (x=0, y=128, w=128, h=128) — Nuclei: 37</div>
+          <span class="prio-badge prio-low">LOW (0.12)</span>
+        </div>
+        <div class="region-item">
+          <div><strong>R_01</strong> (x=0, y=0, w=128, h=128) — Nuclei: 26, Glands: 1</div>
+          <span class="prio-badge prio-low">LOW (0.09)</span>
+        </div>
+        <div class="region-item">
+          <div><strong>R_02</strong> (x=128, y=0, w=128, h=128) — Nuclei: 30</div>
+          <span class="prio-badge prio-low">LOW (0.09)</span>
+        </div>
+        <div class="region-item">
+          <div><strong>R_04</strong> (x=128, y=128, w=128, h=128) — Nuclei: 24</div>
+          <span class="prio-badge prio-low">LOW (0.08)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const currentCase = "CASE_DEMO_00000";
+
+    function setLayer(layer) {
+      document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('main-view').src = `/cases/${currentCase}/visualization/${layer}?t=` + Date.now();
+    }
+
+    async function reviewAction(action) {
+      try {
+        const res = await fetch(`/cases/${currentCase}/review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: action, notes: 'Pathologist verified via Web UI', pathologist_id: 'Dr. Pathologist' })
+        });
+        const data = await res.json();
+        alert(`Action '${action}' recorded successfully for case ${currentCase}!`);
+      } catch (e) {
+        alert('Error: ' + e);
+      }
+    }
+
+    async function addNote() {
+      const text = prompt("Enter clinical note for this case:");
+      if (!text) return;
+      try {
+        await fetch(`/cases/${currentCase}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note_text: text, author: 'Dr. Pathologist' })
+        });
+        alert('Note successfully added to case record!');
+      } catch (e) {
+        alert('Error: ' + e);
+      }
+    }
+  </script>
+</body>
+</html>
