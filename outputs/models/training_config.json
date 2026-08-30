@@ -1,0 +1,22 @@
+{
+  "architecture": "MultimodalFusionNet",
+  "visual_foundation": "Digepath ViT-L/16",
+  "epochs": 20,
+  "batch_size": 32,
+  "learning_rate": 0.001,
+  "seed": 42,
+  "best_val_accuracy": 0.9111111111111111,
+  "classes": [
+    "ADI",
+    "BACK",
+    "DEB",
+    "LYM",
+    "MUC",
+    "MUS",
+    "NORM",
+    "STR",
+    "TUM"
+  ],
+  "num_classes": 9,
+  "morphology_features": 16
+}

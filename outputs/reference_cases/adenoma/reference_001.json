@@ -1,0 +1,20 @@
+{
+  "case_id": "adenoma_001",
+  "class": "adenoma",
+  "nuclei_total": 117,
+  "nuclei_type_1": 3,
+  "nuclei_type_2": 0,
+  "nuclei_type_3": 110,
+  "nuclei_type_4": 4,
+  "nuclei_mean_area_px2": 138.52991452991452,
+  "nuclei_mean_perimeter_px": 49.669943160480926,
+  "nuclei_mean_eccentricity": 0.7414750777911447,
+  "nuclei_mean_circularity": 0.6879766380745798,
+  "glands_total": 2,
+  "glands_mean_area_px2": 24432.0,
+  "glands_mean_perimeter_px": 1234.397573173046,
+  "glands_mean_width_px": 143.0,
+  "glands_mean_height_px": 137.0,
+  "glands_mean_aspect_ratio": 1.3333333333333335,
+  "glands_mean_circularity": 0.3667729861661072
+}

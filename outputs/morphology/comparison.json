@@ -1,0 +1,23 @@
+{
+  "case_id": "nuclei_measurements",
+  "comparisons": [
+    {
+      "reference": "reference_001",
+      "class": "adenocarcinoma",
+      "normalized_distance": 0.0,
+      "similarity_percent": 100.0
+    },
+    {
+      "reference": "reference_001",
+      "class": "adenoma",
+      "normalized_distance": 0.0,
+      "similarity_percent": 100.0
+    },
+    {
+      "reference": "reference_001",
+      "class": "normal",
+      "normalized_distance": 0.0,
+      "similarity_percent": 100.0
+    }
+  ]
+}
