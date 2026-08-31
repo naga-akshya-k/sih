@@ -1,6 +1,6 @@
 {
-  "case_id": "CASE_DEMO_00000",
-  "timestamp": "2026-08-31T09:33:33.244417+00:00",
+  "case_id": "CASE_RUN_LIVE",
+  "timestamp": "2026-08-30T17:50:56.366371+00:00",
   "status": "completed",
   "image_quality": {
     "passed": true,
@@ -130,6 +130,26 @@
   },
   "priority_regions": [
     {
+      "region_id": "R_03",
+      "index": 3,
+      "x": 0,
+      "y": 128,
+      "width": 128,
+      "height": 128,
+      "prediction": "LYM",
+      "confidence": 1.0,
+      "tumor_probability": 0.0,
+      "uncertainty_score": 0.0,
+      "uncertainty_level": "LOW",
+      "priority_score": 0.12299999999999998,
+      "priority_level": "LOW",
+      "priority_label": "AI-prioritized region",
+      "nuclei_count": 37,
+      "glands_count": 0,
+      "agreement_level": "HIGH",
+      "rationale": "Low AI priority with regular morphological patterns."
+    },
+    {
       "region_id": "R_01",
       "index": 1,
       "x": 0,
@@ -141,10 +161,10 @@
       "tumor_probability": 0.0,
       "uncertainty_score": 0.0,
       "uncertainty_level": "LOW",
-      "priority_score": 0.0,
+      "priority_score": 0.09,
       "priority_level": "LOW",
       "priority_label": "AI-prioritized region",
-      "nuclei_count": 0,
+      "nuclei_count": 26,
       "glands_count": 1,
       "agreement_level": "HIGH",
       "rationale": "Low AI priority with regular morphological patterns."
@@ -161,30 +181,10 @@
       "tumor_probability": 0.0,
       "uncertainty_score": 0.0,
       "uncertainty_level": "LOW",
-      "priority_score": 0.0,
+      "priority_score": 0.09,
       "priority_level": "LOW",
       "priority_label": "AI-prioritized region",
-      "nuclei_count": 0,
-      "glands_count": 0,
-      "agreement_level": "HIGH",
-      "rationale": "Low AI priority with regular morphological patterns."
-    },
-    {
-      "region_id": "R_03",
-      "index": 3,
-      "x": 0,
-      "y": 128,
-      "width": 128,
-      "height": 128,
-      "prediction": "LYM",
-      "confidence": 1.0,
-      "tumor_probability": 0.0,
-      "uncertainty_score": 0.0,
-      "uncertainty_level": "LOW",
-      "priority_score": 0.0,
-      "priority_level": "LOW",
-      "priority_label": "AI-prioritized region",
-      "nuclei_count": 0,
+      "nuclei_count": 30,
       "glands_count": 0,
       "agreement_level": "HIGH",
       "rationale": "Low AI priority with regular morphological patterns."
@@ -201,23 +201,23 @@
       "tumor_probability": 0.0,
       "uncertainty_score": 0.0,
       "uncertainty_level": "LOW",
-      "priority_score": 0.0,
+      "priority_score": 0.084,
       "priority_level": "LOW",
       "priority_label": "AI-prioritized region",
-      "nuclei_count": 0,
+      "nuclei_count": 24,
       "glands_count": 0,
       "agreement_level": "HIGH",
       "rationale": "Low AI priority with regular morphological patterns."
     }
   ],
   "visualizations": {
-    "original": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\CASE_DEMO_00000\\original.png",
-    "glands": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\CASE_DEMO_00000\\glands.png",
-    "nuclei": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\CASE_DEMO_00000\\nuclei.png",
-    "regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\CASE_DEMO_00000\\regions.png",
-    "uncertainty": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\CASE_DEMO_00000\\uncertainty.png",
-    "top_regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\CASE_DEMO_00000\\top_regions.png",
-    "pseudo_3d": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\CASE_DEMO_00000\\pseudo_3d.png"
+    "original": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\CASE_RUN_LIVE\\original.png",
+    "glands": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\CASE_RUN_LIVE\\glands.png",
+    "nuclei": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\CASE_RUN_LIVE\\nuclei.png",
+    "regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\CASE_RUN_LIVE\\regions.png",
+    "uncertainty": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\CASE_RUN_LIVE\\uncertainty.png",
+    "top_regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\CASE_RUN_LIVE\\top_regions.png",
+    "pseudo_3d": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\CASE_RUN_LIVE\\pseudo_3d.png"
   },
   "limitations": [
     "Research prototype for decision support; not an autonomous diagnostic device.",
@@ -225,7 +225,7 @@
     "Visual and morphological features are AI-derived computational estimates."
   ],
   "explanation": {
-    "text": "AI-assisted classification suggests **LYM** with 100.0% calibrated confidence.\nNuclear Analysis: 117 nuclei detected (mean area: 138.5 px\u00b2).\nGland Analysis: 2 glandular structures segmented (mean circularity: 0.37).\nModel Agreement: LOW agreement across computational models.\nReference Match: 100.0% similarity to curated 'adenocarcinoma' reference cohort.\nTop AI-Prioritized Region: R_01 (Priority Score: 0.00) located at (x=0, y=0).",
+    "text": "AI-assisted classification suggests **LYM** with 100.0% calibrated confidence.\nNuclear Analysis: 117 nuclei detected (mean area: 138.5 px\u00b2).\nGland Analysis: 2 glandular structures segmented (mean circularity: 0.37).\nModel Agreement: LOW agreement across computational models.\nReference Match: 100.0% similarity to curated 'adenocarcinoma' reference cohort.\nTop AI-Prioritized Region: R_03 (Priority Score: 0.12) located at (x=0, y=128).",
     "validated": true,
     "validation_errors": []
   }

@@ -1,0 +1,4 @@
+*.pth filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+hovernet_original_consep_type_tf2pytorch filter=lfs diff=lfs merge=lfs -text

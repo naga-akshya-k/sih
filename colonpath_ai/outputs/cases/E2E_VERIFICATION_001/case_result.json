@@ -1,6 +1,6 @@
 {
   "case_id": "E2E_VERIFICATION_001",
-  "timestamp": "2026-08-30T13:40:57.267757+00:00",
+  "timestamp": "2026-08-31T10:10:44.444887+00:00",
   "status": "completed",
   "image_quality": {
     "passed": true,
@@ -211,13 +211,13 @@
     }
   ],
   "visualizations": {
-    "original": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\E2E_VERIFICATION_001\\original.png",
-    "glands": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\E2E_VERIFICATION_001\\glands.png",
-    "nuclei": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\E2E_VERIFICATION_001\\nuclei.png",
-    "regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\E2E_VERIFICATION_001\\regions.png",
-    "uncertainty": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\E2E_VERIFICATION_001\\uncertainty.png",
-    "top_regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\E2E_VERIFICATION_001\\top_regions.png",
-    "pseudo_3d": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\E2E_VERIFICATION_001\\pseudo_3d.png"
+    "original": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\E2E_VERIFICATION_001\\original.png",
+    "glands": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\E2E_VERIFICATION_001\\glands.png",
+    "nuclei": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\E2E_VERIFICATION_001\\nuclei.png",
+    "regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\E2E_VERIFICATION_001\\regions.png",
+    "uncertainty": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\E2E_VERIFICATION_001\\uncertainty.png",
+    "top_regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\E2E_VERIFICATION_001\\top_regions.png",
+    "pseudo_3d": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\E2E_VERIFICATION_001\\pseudo_3d.png"
   },
   "limitations": [
     "Research prototype for decision support; not an autonomous diagnostic device.",

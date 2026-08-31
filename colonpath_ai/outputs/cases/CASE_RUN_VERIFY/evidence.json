@@ -1,6 +1,6 @@
 {
-  "case_id": "CASE_DEMO_00000",
-  "timestamp": "2026-08-31T09:33:33.244417+00:00",
+  "case_id": "CASE_RUN_VERIFY",
+  "timestamp": "2026-08-31T05:58:32.772646+00:00",
   "prediction_class": "LYM",
   "prediction_confidence": 1.0,
   "calibrated_confidence": 1.0,

@@ -1,0 +1,10 @@
+{
+  "image": "00000",
+  "nuclei_measured": 117,
+  "mean_area_px2": 138.52991452991452,
+  "median_area_px2": 119.0,
+  "mean_perimeter_px": 49.669943160480926,
+  "median_perimeter_px": 46.041630268096924,
+  "mean_eccentricity": 0.0,
+  "mean_circularity": 0.6879766380745798
+}

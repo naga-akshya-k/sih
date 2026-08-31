@@ -1,6 +1,6 @@
 {
-  "case_id": "CASE_DEMO_00000",
-  "timestamp": "2026-08-31T09:33:33.244417+00:00",
+  "case_id": "CASE_RUN_LIVE",
+  "timestamp": "2026-08-30T17:50:56.366371+00:00",
   "prediction_class": "LYM",
   "prediction_confidence": 1.0,
   "calibrated_confidence": 1.0,
@@ -16,9 +16,9 @@
   "reference_top_similarity_percent": 100.0,
   "priority_regions_count": 4,
   "region_ids": [
+    "R_03",
     "R_01",
     "R_02",
-    "R_03",
     "R_04"
   ]
 }

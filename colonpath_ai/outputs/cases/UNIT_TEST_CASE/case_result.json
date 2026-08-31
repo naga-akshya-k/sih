@@ -1,6 +1,6 @@
 {
   "case_id": "UNIT_TEST_CASE",
-  "timestamp": "2026-08-30T13:40:54.723073+00:00",
+  "timestamp": "2026-08-31T10:10:43.107136+00:00",
   "status": "completed",
   "image_quality": {
     "passed": true,
@@ -211,13 +211,13 @@
     }
   ],
   "visualizations": {
-    "original": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\UNIT_TEST_CASE\\original.png",
-    "glands": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\UNIT_TEST_CASE\\glands.png",
-    "nuclei": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\UNIT_TEST_CASE\\nuclei.png",
-    "regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\UNIT_TEST_CASE\\regions.png",
-    "uncertainty": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\UNIT_TEST_CASE\\uncertainty.png",
-    "top_regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\UNIT_TEST_CASE\\top_regions.png",
-    "pseudo_3d": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\outputs\\visualizations\\UNIT_TEST_CASE\\pseudo_3d.png"
+    "original": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\UNIT_TEST_CASE\\original.png",
+    "glands": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\UNIT_TEST_CASE\\glands.png",
+    "nuclei": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\UNIT_TEST_CASE\\nuclei.png",
+    "regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\UNIT_TEST_CASE\\regions.png",
+    "uncertainty": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\UNIT_TEST_CASE\\uncertainty.png",
+    "top_regions": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\UNIT_TEST_CASE\\top_regions.png",
+    "pseudo_3d": "C:\\Users\\kthir\\OneDrive\\Desktop\\colon_model\\colonpath_ai\\outputs\\visualizations\\UNIT_TEST_CASE\\pseudo_3d.png"
   },
   "limitations": [
     "Research prototype for decision support; not an autonomous diagnostic device.",
