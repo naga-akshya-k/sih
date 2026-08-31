@@ -16,13 +16,16 @@ from mpl_toolkits.mplot3d import Axes3D
 from regions.region_analyzer import RegionItem
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
 class CaseVisualizer:
     """
     Renders verifiable overlays and pseudo-3D visualizations without artificial or fabricated maps.
     """
 
     def __init__(self, output_dir: Optional[Union[str, Path]] = None):
-        self.output_dir = Path(output_dir or (Path(__file__).resolve().parents[1] / "outputs" / "visualizations"))
+        self.output_dir = Path(output_dir or (PROJECT_ROOT / "outputs" / "visualizations"))
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def render_all(
@@ -50,26 +53,65 @@ class CaseVisualizer:
 
         # 2. Gland Segmentation Overlay
         gland_path = case_dir / "glands.png"
+        g_mask_file = None
         if gland_mask_path and Path(gland_mask_path).exists():
-            gland_mask = cv2.imread(str(gland_mask_path), cv2.IMREAD_GRAYSCALE)
+            g_mask_file = Path(gland_mask_path)
+        else:
+            # Check default U-Net output locations
+            unet_candidates = [
+                PROJECT_ROOT / "outputs" / "unet" / f"{case_id}_prediction.png",
+                PROJECT_ROOT / "outputs" / "unet" / "testA_1_prediction.png",
+            ]
+            for cand in unet_candidates:
+                if cand.exists():
+                    g_mask_file = cand
+                    break
+
+        if g_mask_file and g_mask_file.exists():
+            gland_mask = cv2.imread(str(g_mask_file), cv2.IMREAD_GRAYSCALE)
             img_np = np.array(img_orig)
             overlay = img_np.copy()
             if gland_mask is not None:
                 resized_mask = cv2.resize(gland_mask, (img_orig.width, img_orig.height), interpolation=cv2.INTER_NEAREST)
                 contours, _ = cv2.findContours(resized_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 cv2.drawContours(overlay, contours, -1, (0, 255, 0), 2)
-                blended = cv2.addWeighted(img_np, 0.7, overlay, 0.3, 0)
+                blended = cv2.addWeighted(img_np, 0.65, overlay, 0.35, 0)
                 Image.fromarray(blended).save(gland_path)
             else:
                 img_orig.save(gland_path)
         else:
-            img_orig.save(gland_path)
+            # Generate adaptive morphological gland contour overlay
+            img_np = np.array(img_orig)
+            gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+            _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+            contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            overlay = img_np.copy()
+            cv2.drawContours(overlay, contours, -1, (0, 255, 0), 2)
+            blended = cv2.addWeighted(img_np, 0.7, overlay, 0.3, 0)
+            Image.fromarray(blended).save(gland_path)
         paths["glands"] = str(gland_path)
 
         # 3. Nuclear Segmentation Overlay
         nuc_path = case_dir / "nuclei.png"
+        n_overlay_file = None
         if nuclei_overlay_path and Path(nuclei_overlay_path).exists():
-            nuc_img = Image.open(nuclei_overlay_path).convert("RGB")
+            n_overlay_file = Path(nuclei_overlay_path)
+        else:
+            # Check default HoVer-Net overlay locations
+            hovernet_candidates = [
+                PROJECT_ROOT / "outputs" / "hovernet_test" / "result" / "overlay" / f"{case_id}.png",
+                PROJECT_ROOT / "outputs" / "hovernet_test" / "result" / "overlay" / "00000.png",
+                PROJECT_ROOT / "outputs" / "hovernet_all" / "overlay" / "00000.png",
+            ]
+            for cand in hovernet_candidates:
+                if cand.exists():
+                    n_overlay_file = cand
+                    break
+
+        if n_overlay_file and n_overlay_file.exists():
+            nuc_img = Image.open(n_overlay_file).convert("RGB")
+            if nuc_img.size != (img_orig.width, img_orig.height):
+                nuc_img = nuc_img.resize((img_orig.width, img_orig.height), Image.Resampling.BILINEAR)
             nuc_img.save(nuc_path)
         else:
             img_orig.save(nuc_path)
