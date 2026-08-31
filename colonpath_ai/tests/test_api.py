@@ -46,3 +46,17 @@ def test_analyze_and_case_lifecycle():
     # Test review
     r_rev = client.post("/cases/UNIT_TEST_CASE/review", json={"action": "MARK_REVIEWED", "notes": "Test review"})
     assert r_rev.status_code == 200
+
+    # Test Copilot & MedGemma endpoint
+    r_copilot = client.post(
+        "/copilot/ask",
+        json={
+            "case_id": "UNIT_TEST_CASE",
+            "question": "Why was this region prioritized?",
+        },
+    )
+    assert r_copilot.status_code == 200
+    c_data = r_copilot.json()
+    assert c_data["case_id"] == "UNIT_TEST_CASE"
+    assert "answer" in c_data
+    assert c_data["validated"] is True

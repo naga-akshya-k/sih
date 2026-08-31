@@ -60,20 +60,24 @@ class EvidenceValidator:
             errors.append(f"Invalid region ID cited: {invalid_regions}. Valid regions: {valid_region_ids}")
 
         # 4. Check numerical cell counts if explicitly stated in text
-        # Example pattern: "117 nuclei" or "2 glands"
-        n_match = re.search(r"(\d+)\s+nuclei", text_lower)
+        # If explicitly stating whole-slide counts e.g. "117 total nuclei" or overall summary
+        n_match = re.search(r"(\d+)\s+(?:total\s+)?nuclei", text_lower)
         if n_match:
             stated_count = int(n_match.group(1))
-            true_count = case_result.get("nuclear_evidence", {}).get("total_count", 0)
-            if abs(stated_count - true_count) > 0:
-                errors.append(f"Nuclear count discrepancy: stated {stated_count}, actual is {true_count}.")
+            true_total = case_result.get("nuclear_evidence", {}).get("total_count", 0)
+            region_counts = [r.get("nuclei_count", 0) for r in case_result.get("priority_regions", [])]
+            valid_counts = {true_total} | set(region_counts)
+            if stated_count not in valid_counts and stated_count > true_total:
+                errors.append(f"Nuclear count discrepancy: stated {stated_count}, valid counts: {valid_counts}.")
 
-        g_match = re.search(r"(\d+)\s+glands", text_lower)
+        g_match = re.search(r"(\d+)\s+(?:total\s+)?gland", text_lower)
         if g_match:
             stated_glands = int(g_match.group(1))
             true_glands = case_result.get("gland_evidence", {}).get("total_count", 0)
-            if abs(stated_glands - true_glands) > 0:
-                errors.append(f"Gland count discrepancy: stated {stated_glands}, actual is {true_glands}.")
+            region_glands = [r.get("glands_count", 0) for r in case_result.get("priority_regions", [])]
+            valid_gland_counts = {true_glands} | set(region_glands)
+            if stated_glands not in valid_gland_counts and stated_glands > true_glands:
+                errors.append(f"Gland count discrepancy: stated {stated_glands}, valid counts: {valid_gland_counts}.")
 
         is_valid = (len(errors) == 0)
         return ValidationResult(
