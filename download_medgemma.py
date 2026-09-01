@@ -27,8 +27,8 @@ def main():
             token=token,
             resume_download=True
         )
-        print("\n[✓] DOWNLOAD COMPLETE!")
-        print(f"[✓] Model weights cached at: {local_path}")
+        print("\n[OK] DOWNLOAD COMPLETE!")
+        print(f"[OK] Model weights cached at: {local_path}")
     except Exception as e:
         err_msg = str(e)
         if "403" in err_msg or "gated" in err_msg.lower() or "restricted" in err_msg.lower():

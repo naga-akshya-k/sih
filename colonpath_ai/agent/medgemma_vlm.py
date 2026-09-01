@@ -72,12 +72,13 @@ class MedGemmaVLM:
         hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
         try:
             from transformers import AutoTokenizer, AutoModelForCausalLM
+            from huggingface_hub import get_token
             import torch
 
+            tok = hf_token or get_token()
             logger.info(f"Checking MedGemma availability ({self.model_id})...")
-            # Only attempt causal load if explicitly requested or token available
-            if hf_token:
-                self._tokenizer = AutoTokenizer.from_pretrained(self.model_id, token=hf_token)
+            if tok or True:  # Weights are now cached locally
+                self._tokenizer = AutoTokenizer.from_pretrained(self.model_id, token=tok)
                 self._model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
                     token=hf_token,
