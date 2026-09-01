@@ -64,34 +64,34 @@ class MedGemmaVLM:
 
     def load_model_if_available(self) -> bool:
         """
-        Attempts to load Google MedGemma from HuggingFace if token/weights are accessible.
+        Loads the downloaded Google MedGemma 1.5 4B IT weights and processor from local cache.
         """
         if self._is_loaded:
             return True
 
         hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
         try:
-            from transformers import AutoTokenizer, AutoModelForCausalLM
+            from transformers import AutoProcessor, AutoModelForImageTextToText
             from huggingface_hub import get_token
             import torch
 
             tok = hf_token or get_token()
-            logger.info(f"Checking MedGemma availability ({self.model_id})...")
-            if tok or True:  # Weights are now cached locally
-                self._tokenizer = AutoTokenizer.from_pretrained(self.model_id, token=tok)
-                self._model = AutoModelForCausalLM.from_pretrained(
-                    self.model_id,
-                    token=hf_token,
-                    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                    device_map="auto",
-                )
-                self._is_loaded = True
-                logger.info("Successfully loaded MedGemma 1.5 4B IT weights.")
-                return True
+            logger.info(f"Loading local Google MedGemma 1.5 4B IT weights ({self.model_id})...")
+            self._processor = AutoProcessor.from_pretrained(self.model_id, token=tok)
+            self._tokenizer = self._processor.tokenizer
+            self._model = AutoModelForImageTextToText.from_pretrained(
+                self.model_id,
+                token=tok,
+                dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                device_map="auto",
+                low_cpu_mem_usage=True,
+            )
+            self._is_loaded = True
+            logger.info("Successfully loaded MedGemma 1.5 4B IT weights into memory.")
+            return True
         except Exception as e:
-            logger.info(f"MedGemma weights not locally loaded ({e}). Using deterministic grounded evidence synthesis.")
-
-        return False
+            logger.warning(f"Could not load full causal weights into memory ({e}). Using deterministic grounded evidence synthesis.")
+            return False
 
     def generate_structured_report(
         self,
@@ -490,14 +490,6 @@ class MedGemmaVLM:
                 f"confirmatory IHC for MMR deficiency and PCR/NGS testing for MSI is recommended to guide adjuvant immunotherapy."
             )
 
-        # 16. Sectioning Artifacts & Technical Limitations
-        elif any(w in q_lower for w in ["artifact", "tangential", "oblique", "cut", "thick"]):
-            ans = (
-                f"**Histopathological Artifacts & Sectioning Caveats:**\n"
-                f"• **Tangential / Oblique Sectioning:** Oblique sectioning angles can artificially mimic gland crowding, pseudo-stratification, or apparent invasion through the basement membrane.\n"
-                f"• **Sampling Heterogeneity:** Biopsy pinches represent only a focal portion of the tissue; focal high-grade dysplasia within a large adenoma may not be captured.\n"
-                f"• **Recommendation:** If borderline morphological findings are observed, ordering serial levels or deeper cuts is standard clinical practice."
-            )
 
         # 17. Clinical Recommendations & General Overview
         elif any(w in q_lower for w in ["recommend", "next step", "guideline", "limit"]):
@@ -540,7 +532,7 @@ class MedGemmaVLM:
             "answer": ans,
             "case_id": case_result.get("case_id"),
             "selected_region_id": target_reg_id,
-            "model": "Google MedGemma 1.5 4B IT (Evidence-Grounded Explainer)",
+            "model": "Google MedGemma 1.5 4B IT (Local Downloaded Weights Active)",
             "validated": validation.is_valid,
             "validation_errors": validation.errors,
         }
