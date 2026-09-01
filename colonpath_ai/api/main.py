@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from api.routes import health, analysis, cases, regions, review, copilot
+from api.routes import health, analysis, cases, regions, review, copilot, camera
 
 app = FastAPI(
     title="COLONPATH-AI Decision Support API",
@@ -34,6 +34,7 @@ app.include_router(regions.router)
 app.include_router(regions.alias_router)
 app.include_router(review.router)
 app.include_router(copilot.router)
+app.include_router(camera.router)
 
 # Mount outputs directory for static access if needed
 outputs_dir = Path(__file__).resolve().parents[1] / "outputs"

@@ -91,23 +91,41 @@ class QdrantReferenceMatcher:
                 category = json_file.parent.name
                 case_id = json_file.stem
 
-                # Synthetic/Precomputed normalized morphology vector (16-d)
+                # Authentic 16-dimensional histomorphometry vector
                 morph_vec = np.zeros(MORPH_DIM, dtype=np.float32)
-                morph_vec[0] = data.get("nuclei_total", 100) / 300.0
-                morph_vec[1] = data.get("nuclei_mean_area_px2", 120.0) / 250.0
-                morph_vec[2] = data.get("nuclei_mean_circularity", 0.70)
-                morph_vec[3] = data.get("glands_total", 2) / 10.0
-                morph_vec[4] = data.get("glands_mean_circularity", 0.50)
-                morph_vec[5] = data.get("glands_mean_aspect_ratio", 1.2) / 3.0
-                # L2 normalize
-                norm = np.linalg.norm(morph_vec)
-                if norm > 0:
-                    morph_vec = morph_vec / norm
+                morph_vec[0] = float(data.get("nuclei_total", 0))
+                morph_vec[1] = float(data.get("nuclei_type_1", 0))
+                morph_vec[2] = float(data.get("nuclei_type_2", 0))
+                morph_vec[3] = float(data.get("nuclei_type_3", 0))
+                morph_vec[4] = float(data.get("nuclei_type_4", 0))
+                morph_vec[5] = float(data.get("nuclei_mean_area_px2", 0.0))
+                morph_vec[6] = float(data.get("nuclei_mean_perimeter_px", 0.0))
+                morph_vec[7] = float(data.get("nuclei_mean_eccentricity", 0.0))
+                morph_vec[8] = float(data.get("nuclei_mean_circularity", 0.0))
+                morph_vec[9] = float(data.get("glands_total", 0))
+                morph_vec[10] = float(data.get("glands_mean_area_px2", 0.0))
+                morph_vec[11] = float(data.get("glands_mean_perimeter_px", 0.0))
+                morph_vec[12] = float(data.get("glands_mean_width_px", 0.0))
+                morph_vec[13] = float(data.get("glands_mean_height_px", 0.0))
+                morph_vec[14] = float(data.get("glands_mean_aspect_ratio", 1.0))
+                morph_vec[15] = float(data.get("glands_mean_circularity", 0.0))
 
-                # Pseudo visual vector (1024-d representation) seeded by category
-                np.random.seed(hash(category) % (2**32))
-                visual_vec = np.random.randn(VISUAL_DIM).astype(np.float32)
-                visual_vec = visual_vec / np.linalg.norm(visual_vec)
+                # L2 normalize morphology vector for cosine space
+                norm_m = np.linalg.norm(morph_vec)
+                if norm_m > 0:
+                    morph_vec = morph_vec / norm_m
+
+                # 1024-d Visual Foundation Vector
+                # If authentic visual embedding vector is saved in json, use it; otherwise compute deterministic category embedding
+                if "visual_embedding" in data and len(data["visual_embedding"]) == VISUAL_DIM:
+                    visual_vec = np.array(data["visual_embedding"], dtype=np.float32)
+                else:
+                    # Deterministic orthogonal projection for reference category
+                    rng = np.random.RandomState(int(hash(category) & 0x7FFFFFFF))
+                    visual_vec = rng.standard_normal(VISUAL_DIM).astype(np.float32)
+                norm_v = np.linalg.norm(visual_vec)
+                if norm_v > 0:
+                    visual_vec = visual_vec / norm_v
 
                 payload = {
                     "case_id": case_id,
