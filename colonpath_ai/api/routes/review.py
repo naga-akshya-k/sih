@@ -53,3 +53,31 @@ def list_case_notes(case_id: str):
     if not meta:
         raise HTTPException(status_code=404, detail=f"Case '{case_id}' not found.")
     return case_service.get_notes(case_id)
+
+
+@router.post("/feedback")
+def submit_feedback(case_id: str, payload: Dict[str, Any]):
+    """
+    Records pathologist validation feedback (CORRECT, INCORRECT, UNCERTAIN, REVIEW_REQUIRED).
+    """
+    meta = case_service.get_case_meta(case_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail=f"Case '{case_id}' not found.")
+
+    feedback_label = payload.get("feedback", "REVIEW_REQUIRED")
+    notes = payload.get("notes", "")
+    author = payload.get("pathologist_id", "Dr. Pathologist")
+
+    case_service.add_review(
+        case_id=case_id,
+        action=f"FEEDBACK_{feedback_label}",
+        notes=notes,
+        pathologist_id=author,
+    )
+    return {
+        "status": "success",
+        "case_id": case_id,
+        "feedback": feedback_label,
+        "recorded": True,
+    }
+

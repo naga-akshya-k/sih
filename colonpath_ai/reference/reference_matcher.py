@@ -13,6 +13,8 @@ import numpy as np
 from fusion.feature_schema import MorphologyFeatureVector, MORPHOLOGY_FEATURE_KEYS
 from fusion.feature_loader import FeatureLoader
 
+from .qdrant_matcher import QdrantReferenceMatcher
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_REF_DIR = Path(__file__).resolve().parents[1] / "outputs" / "reference_cases"
@@ -33,17 +35,21 @@ class ReferenceComparisonResult(BaseModel):
     top_match_id: str
     comparisons: List[ReferenceMatchItem]
     clinical_insight: str
+    retrieval_engine: str = "Qdrant Vector Database"
 
 
 class ReferenceMatcher:
     """
-    Computes mathematical similarity between query case features and curated reference cohorts.
+    Computes mathematical and vector similarity using Qdrant Vector Search
+    against curated reference databases.
     """
 
     def __init__(self, reference_dir: Optional[Union[str, Path]] = None):
         self.reference_dir = Path(reference_dir or DEFAULT_REF_DIR)
         self._reference_cache: List[Dict[str, Any]] = []
         self._load_references()
+        self.qdrant_engine = QdrantReferenceMatcher()
+
 
     def _load_references(self) -> None:
         self._reference_cache.clear()

@@ -17,13 +17,17 @@ class UncertaintyResult(BaseModel):
     normalized_entropy: float
     uncertainty_score: float
     uncertainty_level: str  # "LOW", "MEDIUM", "HIGH"
+    ood_score: float = Field(default=0.0, description="Energy-based Out-of-Distribution score")
+    ood_status: str = Field(default="IN_DISTRIBUTION", description="IN_DISTRIBUTION or OOD_DETECTED")
+    is_ood: bool = Field(default=False, description="True if input falls outside training distribution")
     review_required: bool
     abstention_message: str
 
 
 class UncertaintyEstimator:
     """
-    Computes entropy, calibrated confidence, uncertainty levels, and handles automated abstention.
+    Computes entropy, calibrated confidence, uncertainty levels, energy-based OOD detection,
+    and handles automated abstention.
     """
 
     def __init__(
@@ -32,11 +36,13 @@ class UncertaintyEstimator:
         uncertainty_threshold_high: float = 0.50,
         uncertainty_threshold_med: float = 0.25,
         min_confidence_threshold: float = 0.60,
+        ood_energy_threshold: float = -2.5,
     ):
         self.scaler = scaler or TemperatureScaler()
         self.thresh_high = uncertainty_threshold_high
         self.thresh_med = uncertainty_threshold_med
         self.min_confidence = min_confidence_threshold
+        self.ood_energy_threshold = ood_energy_threshold
 
     def estimate(
         self,
@@ -66,18 +72,37 @@ class UncertaintyEstimator:
         # 3. Margin Uncertainty: Margin = 1 - (P_top1 - P_top2)
         margin_uncertainty = float(1.0 - (cal_conf - second_conf))
 
-        # 4. Composite Uncertainty Score: (Normalized Entropy + Margin Uncertainty) / 2
+        # 4. Energy-Based Out-Of-Distribution (OOD) Detection: E(x; T) = -T * log(sum(exp(logits / T)))
+        t_val = float(self.scaler.temperature.item()) if hasattr(self.scaler, "temperature") else 1.25
+        # Numerical stability via max subtraction
+        max_l = np.max(logits_arr / t_val)
+        exp_sum = np.sum(np.exp((logits_arr / t_val) - max_l))
+        free_energy = float(-t_val * (max_l + np.log(exp_sum + eps)))
+        
+        # Normalize OOD score into [0, 1] range using stable sigmoid
+        clipped_e = float(np.clip(-free_energy, -50.0, 50.0))
+        norm_ood_score = float(1.0 / (1.0 + np.exp(-clipped_e)))
+        is_ood = free_energy > self.ood_energy_threshold or not image_quality_passed
+        ood_status = "OOD_DETECTED" if is_ood else "IN_DISTRIBUTION"
+
+        # 5. Composite Uncertainty Score: (Normalized Entropy + Margin Uncertainty) / 2
         uncertainty_score = float(0.6 * norm_entropy + 0.4 * margin_uncertainty)
-        if not image_quality_passed:
+        if not image_quality_passed or is_ood:
             uncertainty_score = min(1.0, uncertainty_score + 0.30)
 
-        # 5. Categorize Uncertainty Level
-        if uncertainty_score >= self.thresh_high or cal_conf < self.min_confidence or not image_quality_passed:
+        # 6. Categorize Uncertainty Level
+        if is_ood and not image_quality_passed:
             level = "HIGH"
             review_required = True
-            if not image_quality_passed:
-                msg = "Image quality compromised (blur/contrast). Pathologist review mandatory."
-            elif cal_conf < self.min_confidence:
+            msg = "Image quality compromised (blur/contrast). Pathologist review mandatory."
+        elif is_ood:
+            level = "HIGH"
+            review_required = True
+            msg = "OOD / unsupported tissue input detected. Automated prediction abstained."
+        elif uncertainty_score >= self.thresh_high or cal_conf < self.min_confidence:
+            level = "HIGH"
+            review_required = True
+            if cal_conf < self.min_confidence:
                 msg = "AI confidence insufficient. Pathologist review recommended."
             else:
                 msg = "High model uncertainty detected. Pathologist review recommended."
@@ -97,6 +122,9 @@ class UncertaintyEstimator:
             normalized_entropy=norm_entropy,
             uncertainty_score=uncertainty_score,
             uncertainty_level=level,
+            ood_score=norm_ood_score,
+            ood_status=ood_status,
+            is_ood=is_ood,
             review_required=review_required,
             abstention_message=msg,
         )

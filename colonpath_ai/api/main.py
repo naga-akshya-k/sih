@@ -31,6 +31,7 @@ app.include_router(health.router)
 app.include_router(analysis.router)
 app.include_router(cases.router)
 app.include_router(regions.router)
+app.include_router(regions.alias_router)
 app.include_router(review.router)
 app.include_router(copilot.router)
 

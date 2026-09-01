@@ -61,3 +61,54 @@ def get_case_visualization(case_id: str, vis_type: str):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"Visualization file on disk not found: {file_path}")
     return FileResponse(file_path, media_type="image/png")
+
+
+@router.get("/{case_id}/evidence", response_model=Dict[str, Any])
+def get_case_evidence(case_id: str):
+    """
+    Returns the deterministic computational evidence payload (evidence.json) for a case.
+    """
+    result = case_service.get_case_result(case_id)
+    if not result:
+        raise HTTPException(status_code=404, detail=f"Case '{case_id}' not found.")
+
+    evidence = {
+        "case_id": result.get("case_id"),
+        "timestamp": result.get("timestamp"),
+        "prediction_class": result.get("prediction", {}).get("class"),
+        "prediction_confidence": result.get("prediction", {}).get("confidence"),
+        "calibrated_confidence": result.get("prediction", {}).get("calibrated_confidence"),
+        "tumor_probability": result.get("prediction", {}).get("tumor_probability"),
+        "uncertainty_score": result.get("uncertainty", {}).get("score"),
+        "uncertainty_level": result.get("uncertainty", {}).get("level"),
+        "ood_score": result.get("uncertainty", {}).get("ood_score", 0.0),
+        "ood_status": result.get("uncertainty", {}).get("ood_status", "IN_DISTRIBUTION"),
+        "agreement_level": result.get("model_agreement", {}).get("level"),
+        "nuclear_total_count": result.get("nuclear_evidence", {}).get("total_count"),
+        "nuclear_mean_area_px2": result.get("nuclear_evidence", {}).get("mean_area_px2"),
+        "gland_total_count": result.get("gland_evidence", {}).get("total_count"),
+        "gland_mean_circularity": result.get("gland_evidence", {}).get("mean_circularity"),
+        "reference_top_category": result.get("reference_comparison", {}).get("top_category"),
+        "reference_top_similarity_percent": result.get("reference_comparison", {}).get("top_similarity_percent"),
+        "priority_regions_count": len(result.get("priority_regions", [])),
+    }
+    return evidence
+
+
+@router.get("/{case_id}/report", response_model=Dict[str, Any])
+def get_case_report(case_id: str):
+    """
+    Returns the structured MedGemma medical explanation report for a case.
+    """
+    result = case_service.get_case_result(case_id)
+    if not result:
+        raise HTTPException(status_code=404, detail=f"Case '{case_id}' not found.")
+
+    explanation = result.get("explanation", {})
+    return {
+        "case_id": case_id,
+        "explanation": explanation,
+        "limitations": result.get("limitations", []),
+        "status": result.get("status", "completed"),
+    }
+

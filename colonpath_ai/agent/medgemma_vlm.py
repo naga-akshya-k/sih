@@ -17,23 +17,36 @@ logger = logging.getLogger(__name__)
 
 MEDGEMMA_MODEL_ID = "google/medgemma-1.5-4b-it"
 
-MEDGEMMA_SYSTEM_PROMPT = """You are an evidence-grounded medical pathology AI assistant.
+MEDGEMMA_SYSTEM_PROMPT = """You are an evidence-grounded medical pathology AI assistant for colorectal histopathology.
 
-Use only the supplied image and verified computational evidence.
+Follow the mandatory reasoning chain:
+Feature (quantitative/morphometric) -> Biological Meaning (tissue biology) -> Qualified Interpretation (bounded statement - never a standalone diagnosis).
+
+Controlled Pathology Vocabulary (Preferred Terms):
+- Use 'Nuclear pleomorphism / atypia' (not 'cells look weird')
+- Use 'Architectural distortion / glandular disorganization' (not 'glands messed up')
+- Use 'Hyperchromasia' (not 'dark nuclei')
+- Use 'Nuclear stratification / pseudostratification' (not 'cells stacked up')
+- Use 'Invasion through muscularis mucosae into submucosa' for adenocarcinoma
+- Use 'Adenoma / dysplasia (specify low-grade or high-grade)' for pre-malignant lesions
+- Use 'Luminal (dirty) necrosis' (not 'dead tissue in gland')
+- Use 'Loss of nuclear/cellular polarity' (not 'messy borders')
+- Use 'Increased mitotic activity / atypical mitoses'
+
+Features that must NOT be interpreted independently:
+- Nuclear enlargement alone is not diagnostic (can occur in reactive/inflammatory atypia or regeneration).
+- Hyperchromasia alone is not diagnostic (affected by staining and section thickness).
+- Mitotic count alone is not diagnostic (must be contextualized to crypt zone).
+- Gland crowding/density alone is not diagnostic (can occur in tangential sectioning).
+- N:C ratio alone is not diagnostic.
+- No single computational metric is diagnostic.
 
 Do not invent:
-- measurements
-- cell counts
-- gland counts
-- probabilities
-- coordinates
-- model predictions
-- clinical history
-- unsupported pathology findings
+- measurements, cell counts, gland counts, probabilities, coordinates, predictions, clinical history, or unsupported findings.
 
-If information is unavailable, say: "Insufficient evidence."
-Do not treat a single feature as independently diagnostic.
-Your response is AI-assisted research evidence for review by a qualified pathologist and is not a definitive diagnosis."""
+If information is unavailable, state: 'Insufficient evidence.'
+Your output is supportive decision-support information for review by a qualified pathologist and is not a definitive diagnosis."""
+
 
 
 class MedGemmaVLM:
@@ -217,29 +230,105 @@ class MedGemmaVLM:
         if not target_reg and regions:
             target_reg = regions[0]
 
-        # 1. Nuclear / Cytological Morphology Queries
-        if any(w in q_lower for w in ["nuclear", "nuclei", "pleomorph", "epithelial", "inflammatory", "spindle", "cytolog"]):
+        # 0. Reference Histology: Normal vs Adenoma vs Cancer Criteria (Official PDF)
+        if any(phrase in q_lower for phrase in [
+            "normal cell", "cancer cell", "how normal", "how cancer", "normal looks", "cancer looks",
+            "normal vs", "cancer vs", "adenoma vs", "detection parameter", "reference parameter",
+            "histological criteria", "dysplasia criteria", "classification parameter"
+        ]) or (("normal" in q_lower or "cancer" in q_lower) and any(w in q_lower for w in ["look", "differ", "distinguish", "contrast", "criteria", "parameter", "characteristic"])):
+            top_cat = ref.get("top_category", "none")
+            top_sim = ref.get("top_similarity_percent", 0.0)
+            ref_id = ref.get("top_reference_id", "reference_001")
             ans = (
-                f"**Nuclear Cytopathology:** Detected **{nuc.get('total_count', 0)} total nuclei** with a mean nuclear area of "
-                f"**{nuc.get('mean_area_px2', 0.0):.1f} px²**, mean perimeter of **{nuc.get('mean_perimeter_px', 0.0):.1f} px**, "
-                f"eccentricity of **{nuc.get('mean_eccentricity', 0.0):.3f}**, and circularity of **{nuc.get('mean_circularity', 0.0):.2f}**. "
-                f"Phenotype distribution: {nuc.get('type_counts', {}).get('epithelial', 0)} Epithelial, "
-                f"{nuc.get('type_counts', {}).get('inflammatory', 0)} Inflammatory, "
-                f"{nuc.get('type_counts', {}).get('spindle_shaped', 0)} Spindle-shaped, and "
-                f"{nuc.get('type_counts', {}).get('miscellaneous', 0)} Miscellaneous. "
-                f"Interpretation: {nuc.get('interpretation', 'Nuclear distribution analyzed.')}"
+                f"**Reference Histological Criteria for Colorectal Tissue (Per Official Reference):**\n\n"
+                f"• **Normal Colon Cells & Glands:**\n"
+                f"  - *Nuclei:* Small, basally located along the basement membrane, oval, regular contours, finely dispersed (open) chromatin, strict polarity maintained.\n"
+                f"  - *Architecture:* Straight, evenly spaced, parallel crypts of uniform length and caliber; intact basement membrane; even proportion of columnar absorptive cells and mucin-secreting goblet cells; mitoses confined strictly to crypt base.\n\n"
+                f"• **Adenoma (Dysplasia - Pre-malignant):**\n"
+                f"  - *Nuclei:* Nuclear stratification / pseudostratification (elongated, piled up in multiple layers), mild loss of polarity, hyperchromasia (coarser chromatin), increased mitoses above basal third.\n"
+                f"  - *Architecture:* Elongated, branched, crowded ('back-to-back') crypts; basement membrane intact (defines benign neoplasm); mucin depletion.\n\n"
+                f"• **Adenocarcinoma (Colorectal Malignancy):**\n"
+                f"  - *Nuclei:* Marked nuclear pleomorphism (pronounced size/shape variation), coarse/clumped chromatin, prominent irregular nucleoli, markedly increased N:C ratio, frequent/atypical mitoses, complete loss of polarity.\n"
+                f"  - *Architecture:* Irregular, haphazardly fused, cribriform or single-file infiltrative glands; breached basement membrane (defining invasion through muscularis mucosae into submucosa); complex angulated lumina; luminal necrotic debris ('dirty necrosis'); desmoplastic stroma.\n\n"
+                f"• **Current Case Computational Metrics ({case_result.get('case_id')}):**\n"
+                f"  - Nuclear count: **{nuc.get('total_count', 0)} nuclei** (mean area: **{nuc.get('mean_area_px2', 0.0):.1f} px²**, circularity: **{nuc.get('mean_circularity', 0.0):.2f}**).\n"
+                f"  - Gland count: **{gland.get('total_count', 0)} glands** (mean circularity: **{gland.get('mean_circularity', 0.0):.2f}**, aspect ratio: **{gland.get('mean_aspect_ratio', 1.0):.2f}**).\n"
+                f"  - Reference Match: **{top_sim:.1f}% feature similarity** to curated **'{top_cat}'** reference cohort ({ref_id}).\n\n"
+                f"*Clinical Limitation:* No single quantitative feature is independently diagnostic; diagnosis requires integrated architectural + cytological + invasive-status assessment by a qualified pathologist."
             )
 
-        # 2. Glandular / Histological Architectural Queries
-        elif any(w in q_lower for w in ["gland", "architect", "distortion", "tubul", "cribriform", "lumen", "circularity", "aspect ratio"]):
+        # 1. Invasion & Definitive Carcinoma Criteria Queries
+        elif any(w in q_lower for w in ["invas", "muscularis", "submucosa", "breach", "defining criterion", "defining criteria"]):
             ans = (
-                f"**Glandular Histomorphometry:** Segmented **{gland.get('total_count', 0)} glandular structures** by U-Net with a mean area of "
-                f"**{gland.get('mean_area_pixels', 0.0):.0f} px²**, mean circularity of **{gland.get('mean_circularity', 0.0):.2f}**, and "
-                f"aspect ratio of **{gland.get('mean_aspect_ratio', 1.0):.2f}**. "
-                f"Interpretation: {gland.get('interpretation', 'Gland architecture analyzed.')}"
+                f"**Histopathological Invasion Criteria:**\n"
+                f"• **The Defining Diagnostic Criterion for Colorectal Adenocarcinoma:** Invasion of neoplastic glands through the muscularis mucosae "
+                f"into the submucosa (or beyond). In contrast, in adenoma (dysplasia), the basement membrane remains strictly intact.\n"
+                f"• **Invasive Architectural Features:** Irregular, haphazardly fused, cribriform or single-file infiltrative glands accompanied by desmoplastic stromal response.\n"
+                f"• **Current Case AI Status:** Predicted tissue class is **{pred.get('class', 'UNKNOWN')}** with tumor likelihood of **{pred.get('tumor_probability', 0.0) * 100.0:.1f}%**. "
+                f"Microscopic histological correlation of the muscularis mucosae by a pathologist is required to confirm invasive depth."
             )
 
-        # 3. Specific Region Details / Prioritization Queries
+        # 2. Luminal Dirty Necrosis & Gland Debris Queries
+        elif any(w in q_lower for w in ["necros", "dirty", "debris", "dead tissue"]):
+            ans = (
+                f"**Luminal Content & Necrosis Evaluation:**\n"
+                f"• **Luminal (Dirty) Necrosis:** Consists of sloughed eosinophilic necrotic debris and apoptotic nuclear fragments within complex, irregular gland lumina. "
+                f"It is a classic hallmark of colorectal adenocarcinoma.\n"
+                f"• **In Normal Colon:** Gland lumina are round, simple, and contain clean mucin without necrotic debris.\n"
+                f"• **Current Case Finding:** Segmented **{gland.get('total_count', 0)} glands** with low mean circularity of **{gland.get('mean_circularity', 0.0):.2f}**, "
+                f"indicating angulated/irregular glandular lumina."
+            )
+
+        # 3. Nuclear Pseudostratification & Polarity Queries
+        elif any(w in q_lower for w in ["stratifi", "pseudostrat", "polarity", "stacked", "disorganiz", "orientation"]):
+            ans = (
+                f"**Nuclear Polarity & Stratification Analysis:**\n"
+                f"• **Normal Colon:** Nuclei maintain strict basal polarity, aligned along the basement membrane perpendicular to the mucosal surface.\n"
+                f"• **Pseudostratification in Dysplasia:** Nuclei become elongated and piled up into multiple overlapping layers rather than a single basal row.\n"
+                f"• **Loss of Polarity in Carcinoma:** Complete architectural disorganization where nuclei orient in haphazard directions without relationship to the basement membrane.\n"
+                f"• **Current Case Finding:** Detected **{nuc.get('total_count', 0)} nuclei** with an eccentricity of **{nuc.get('mean_eccentricity', 0.0):.3f}** and circularity of **{nuc.get('mean_circularity', 0.0):.2f}**."
+            )
+
+        # 4. Grading & Dysplasia Queries (Low-grade vs High-grade, Differentiation)
+        elif any(w in q_lower for w in ["grad", "dysplasia", "differentiat", "well-diff", "poorly diff"]):
+            ans = (
+                f"**Pathology Grading & Differentiation Criteria (Per Official Reference):**\n"
+                f"• **Dysplasia Grading (Adenoma):** Classified as low-grade or high-grade dysplasia based on the degree of nuclear atypia "
+                f"(stratification beyond basal half, hyperchromasia, loss of polarity) and architectural complexity — never on any single feature alone.\n"
+                f"• **Differentiation Grading (Adenocarcinoma):** Based strictly on the percentage of glandular formation: "
+                f"Well-differentiated (>95% glands), Moderately differentiated (50–95% glands), and Poorly differentiated (<50% glands or solid/signet-ring patterns).\n"
+                f"• **Current Case Finding:** Gland segmentation indicates **{gland.get('total_count', 0)} glands** with mean circularity **{gland.get('mean_circularity', 0.0):.2f}** "
+                f"and aspect ratio **{gland.get('mean_aspect_ratio', 1.0):.2f}**, reflecting glandular architectural complexity."
+            )
+
+        # 5. Mitoses & Proliferation Queries
+        elif any(w in q_lower for w in ["mitos", "proliferat", "dividing", "mitotic"]):
+            ans = (
+                f"**Mitotic Activity & Proliferation Zone:**\n"
+                f"• **Normal Colon:** Mitotic figures are strictly confined to the basal third (crypt base) and are completely absent at the luminal surface.\n"
+                f"• **Dysplasia & Carcinoma:** Mitotic activity extends into the upper two-thirds and luminal surface, with frequent atypical or multipolar mitotic figures.\n"
+                f"• **Pathology Constraint:** Mitotic count alone is not independently diagnostic; it must be standardized to field area and contextualized to crypt zone location."
+            )
+
+        # 6. Molecular & Immunohistochemistry (IHC/MSI) Queries
+        elif any(w in q_lower for w in ["ihc", "msi", "mmr", "kras", "braf", "stain", "molecular", "genetic"]):
+            ans = (
+                f"**Immunohistochemistry & Molecular Diagnostics:**\n"
+                f"• **Limitation:** Standard H&E morphology alone cannot establish mismatch repair (MMR) protein status (MLH1, MSH2, MSH6, PMS2) or identify KRAS/BRAF mutations.\n"
+                f"• **Clinical Recommendation:** For cases with discordant morphology or high tumor probability ({pred.get('tumor_probability', 0.0) * 100.0:.1f}%), "
+                f"confirmatory IHC for MMR deficiency and PCR/NGS testing for MSI is recommended to guide adjuvant immunotherapy."
+            )
+
+        # 7. Sectioning Artifacts & Technical Limitations
+        elif any(w in q_lower for w in ["artifact", "tangential", "oblique", "thick section"]):
+            ans = (
+                f"**Histopathological Artifacts & Sectioning Caveats:**\n"
+                f"• **Tangential / Oblique Sectioning:** Oblique sectioning angles can artificially mimic gland crowding, pseudo-stratification, or apparent invasion through the basement membrane.\n"
+                f"• **Sampling Heterogeneity:** Biopsy pinches represent only a focal portion of the tissue; focal high-grade dysplasia within a large adenoma may not be captured.\n"
+                f"• **Recommendation:** If borderline morphological findings are observed, ordering serial levels or deeper cuts is standard clinical practice."
+            )
+
+        # 8. Specific Region Details / Prioritization Queries
         elif any(w in q_lower for w in ["prioritized", "priority", "why red", "why yellow", "why green", "region detail", "bounding box", "coordinate", "r_0", "r_1", "r_2", "r_3", "r_4"]):
             if target_reg:
                 ans = (
@@ -251,7 +340,29 @@ class MedGemmaVLM:
             else:
                 ans = f"There are {len(regions)} AI-prioritized spatial regions analyzed. Highest priority is {regions[0].get('region_id') if regions else 'none'}."
 
-        # 4. Prediction, Tissue Class, & Tumor Malignancy Queries
+        # 9. Nuclear / Cytological Morphology Queries
+        elif any(w in q_lower for w in ["nuclear", "nuclei", "pleomorph", "epithelial", "inflammatory", "spindle", "cytolog"]):
+            ans = (
+                f"**Nuclear Cytopathology:** Detected **{nuc.get('total_count', 0)} total nuclei** with a mean nuclear area of "
+                f"**{nuc.get('mean_area_px2', 0.0):.1f} px²**, mean perimeter of **{nuc.get('mean_perimeter_px', 0.0):.1f} px**, "
+                f"eccentricity of **{nuc.get('mean_eccentricity', 0.0):.3f}**, and circularity of **{nuc.get('mean_circularity', 0.0):.2f}**. "
+                f"Phenotype distribution: {nuc.get('type_counts', {}).get('epithelial', 0)} Epithelial, "
+                f"{nuc.get('type_counts', {}).get('inflammatory', 0)} Inflammatory, "
+                f"{nuc.get('type_counts', {}).get('spindle_shaped', 0)} Spindle-shaped, and "
+                f"{nuc.get('type_counts', {}).get('miscellaneous', 0)} Miscellaneous. "
+                f"Interpretation: {nuc.get('interpretation', 'Nuclear distribution analyzed.')}"
+            )
+
+        # 10. Glandular / Histological Architectural Queries
+        elif any(w in q_lower for w in ["gland", "architect", "distortion", "tubul", "cribriform", "lumen", "circularity", "aspect ratio"]):
+            ans = (
+                f"**Glandular Histomorphometry:** Segmented **{gland.get('total_count', 0)} glandular structures** by U-Net with a mean area of "
+                f"**{gland.get('mean_area_pixels', 0.0):.0f} px²**, mean circularity of **{gland.get('mean_circularity', 0.0):.2f}**, and "
+                f"aspect ratio of **{gland.get('mean_aspect_ratio', 1.0):.2f}**. "
+                f"Interpretation: {gland.get('interpretation', 'Gland architecture analyzed.')}"
+            )
+
+        # 11. Prediction, Tissue Class, & Tumor Malignancy Queries
         elif any(w in q_lower for w in ["prediction", "predict", "tissue class", "tumor", "malignan", "cancer", "adenocarcinoma", "adenoma", "benign", "normal", "what is this"]):
             pred_class = pred.get("class", "UNKNOWN")
             conf = pred.get("calibrated_confidence", pred.get("confidence", 0.0)) * 100.0
@@ -316,16 +427,87 @@ class MedGemmaVLM:
                 f"Contrast: {quality.get('contrast_std', 0.0)} ({quality.get('contrast_status', 'ACCEPTABLE')})."
             )
 
-        # 10. Clinical Recommendations & Limitations Queries
-        elif any(w in q_lower for w in ["recommend", "next step", "stain", "ihc", "msi", "guideline", "limit"]):
+        # 10. Grading & Dysplasia Queries (Low-grade vs High-grade, Differentiation)
+        elif any(w in q_lower for w in ["grad", "dysplasia", "differentiat", "well-diff", "poorly diff"]):
             ans = (
-                f"**Clinical Recommendations & Limitations:** "
-                f"1. COLONPATH-AI is an evidence-grounded decision-support tool, not an autonomous diagnostic device. "
-                f"2. {'Confirmatory immunohistochemistry (IHC) or MSI testing is suggested for discordant morphology.' if agr.get('level') == 'LOW' else 'Routine histological correlation is recommended.'} "
-                f"3. Final diagnosis and staging must always be established by a qualified pathologist."
+                f"**Pathology Grading & Differentiation Criteria (Per Official Reference):**\n"
+                f"• **Dysplasia Grading (Adenoma):** Classified as low-grade or high-grade dysplasia based on the degree of nuclear atypia "
+                f"(stratification beyond basal half, hyperchromasia, loss of polarity) and architectural complexity — never on any single feature alone.\n"
+                f"• **Differentiation Grading (Adenocarcinoma):** Based strictly on the percentage of glandular formation: "
+                f"Well-differentiated (>95% glands), Moderately differentiated (50–95% glands), and Poorly differentiated (<50% glands or solid/signet-ring patterns).\n"
+                f"• **Current Case Finding:** Gland segmentation indicates **{gland.get('total_count', 0)} glands** with mean circularity **{gland.get('mean_circularity', 0.0):.2f}** "
+                f"and aspect ratio **{gland.get('mean_aspect_ratio', 1.0):.2f}**, reflecting glandular architectural complexity."
             )
 
-        # 11. General Summary & Overview Queries
+        # 11. Invasion & Definitive Carcinoma Criteria Queries
+        elif any(w in q_lower for w in ["invas", "muscularis", "submucosa", "breach", "basement membrane", "defining"]):
+            ans = (
+                f"**Histopathological Invasion Criteria:**\n"
+                f"• **The Defining Diagnostic Criterion for Colorectal Adenocarcinoma:** Invasion of neoplastic glands through the muscularis mucosae "
+                f"into the submucosa (or beyond). In contrast, in adenoma (dysplasia), the basement membrane remains strictly intact.\n"
+                f"• **Invasive Architectural Features:** Irregular, haphazardly fused, cribriform or single-file infiltrative glands accompanied by desmoplastic stromal response.\n"
+                f"• **Current Case AI Status:** Predicted tissue class is **{pred.get('class', 'UNKNOWN')}** with tumor likelihood of **{pred.get('tumor_probability', 0.0) * 100.0:.1f}%**. "
+                f"Microscopic histological correlation of the muscularis mucosae by a pathologist is required to confirm invasive depth."
+            )
+
+        # 12. Luminal Dirty Necrosis & Gland Debris Queries
+        elif any(w in q_lower for w in ["necros", "dirty", "debris", "dead tissue", "lumen", "lumina"]):
+            ans = (
+                f"**Luminal Content & Necrosis Evaluation:**\n"
+                f"• **Luminal (Dirty) Necrosis:** Consists of sloughed eosinophilic necrotic debris and apoptotic nuclear fragments within complex, irregular gland lumina. "
+                f"It is a classic hallmark of colorectal adenocarcinoma.\n"
+                f"• **In Normal Colon:** Gland lumina are round, simple, and contain clean mucin without necrotic debris.\n"
+                f"• **Current Case Finding:** Segmented **{gland.get('total_count', 0)} glands** with low mean circularity of **{gland.get('mean_circularity', 0.0):.2f}**, "
+                f"indicating angulated/irregular glandular lumina."
+            )
+
+        # 13. Nuclear Pseudostratification & Polarity Queries
+        elif any(w in q_lower for w in ["stratifi", "pseudostrat", "polarity", "stacked", "disorganiz", "orientation"]):
+            ans = (
+                f"**Nuclear Polarity & Stratification Analysis:**\n"
+                f"• **Normal Colon:** Nuclei maintain strict basal polarity, aligned along the basement membrane perpendicular to the mucosal surface.\n"
+                f"• **Pseudostratification in Dysplasia:** Nuclei become elongated and piled up into multiple overlapping layers rather than a single basal row.\n"
+                f"• **Loss of Polarity in Carcinoma:** Complete architectural disorganization where nuclei orient in haphazard directions without relationship to the basement membrane.\n"
+                f"• **Current Case Finding:** Detected **{nuc.get('total_count', 0)} nuclei** with an eccentricity of **{nuc.get('mean_eccentricity', 0.0):.3f}** and circularity of **{nuc.get('mean_circularity', 0.0):.2f}**."
+            )
+
+        # 14. Mitoses & Proliferation Queries
+        elif any(w in q_lower for w in ["mitos", "proliferat", "dividing", "mitotic"]):
+            ans = (
+                f"**Mitotic Activity & Proliferation Zone:**\n"
+                f"• **Normal Colon:** Mitotic figures are strictly confined to the basal third (crypt base) and are completely absent at the luminal surface.\n"
+                f"• **Dysplasia & Carcinoma:** Mitotic activity extends into the upper two-thirds and luminal surface, with frequent atypical or multipolar mitotic figures.\n"
+                f"• **Pathology Constraint:** Mitotic count alone is not independently diagnostic; it must be standardized to field area and contextualized to crypt zone location."
+            )
+
+        # 15. Molecular & Immunohistochemistry (IHC/MSI) Queries
+        elif any(w in q_lower for w in ["ihc", "msi", "mmr", "kras", "braf", "stain", "molecular", "genetic"]):
+            ans = (
+                f"**Immunohistochemistry & Molecular Diagnostics:**\n"
+                f"• **Limitation:** Standard H&E morphology alone cannot establish mismatch repair (MMR) protein status (MLH1, MSH2, MSH6, PMS2) or identify KRAS/BRAF mutations.\n"
+                f"• **Clinical Recommendation:** For cases with discordant morphology or high tumor probability ({pred.get('tumor_probability', 0.0) * 100.0:.1f}%), "
+                f"confirmatory IHC for MMR deficiency and PCR/NGS testing for MSI is recommended to guide adjuvant immunotherapy."
+            )
+
+        # 16. Sectioning Artifacts & Technical Limitations
+        elif any(w in q_lower for w in ["artifact", "tangential", "oblique", "cut", "thick"]):
+            ans = (
+                f"**Histopathological Artifacts & Sectioning Caveats:**\n"
+                f"• **Tangential / Oblique Sectioning:** Oblique sectioning angles can artificially mimic gland crowding, pseudo-stratification, or apparent invasion through the basement membrane.\n"
+                f"• **Sampling Heterogeneity:** Biopsy pinches represent only a focal portion of the tissue; focal high-grade dysplasia within a large adenoma may not be captured.\n"
+                f"• **Recommendation:** If borderline morphological findings are observed, ordering serial levels or deeper cuts is standard clinical practice."
+            )
+
+        # 17. Clinical Recommendations & General Overview
+        elif any(w in q_lower for w in ["recommend", "next step", "guideline", "limit"]):
+            ans = (
+                f"**Clinical Recommendations:**\n"
+                f"1. COLONPATH-AI provides decision-support evidence; final diagnosis rests with the certified pathologist.\n"
+                f"2. {'IHC/MSI testing recommended for discordant morphological findings.' if agr.get('level') == 'LOW' else 'Routine morphological correlation recommended.'}\n"
+                f"3. Full slide review is advised if biopsy sampling is focal."
+            )
+
+        # 18. General Summary & Overview Queries
         elif any(w in q_lower for w in ["summary", "overview", "report", "findings", "what do you see", "explain this case", "help"]):
             ans = (
                 f"**Case Summary for {case_result.get('case_id')}:**\n"
@@ -338,13 +520,15 @@ class MedGemmaVLM:
             )
 
         else:
-            # Natural Conversational & General Pathology Inquiry Fallback
+            # 19. Natural Conversational Semantic Fallback (Grounded in Case Measurements & PDF Principles)
             ans = (
-                f"AI-assisted clinical analysis for case **{case_result.get('case_id')}** indicates predicted tissue class "
-                f"**{pred.get('class', 'UNKNOWN')}** with **{pred.get('calibrated_confidence', 0.0) * 100.0:.1f}% confidence**. "
-                f"Quantitative findings: **{nuc.get('total_count', 0)} nuclei** ({nuc.get('mean_area_px2', 0.0):.1f} px² mean area) "
-                f"and **{gland.get('total_count', 0)} glands** ({gland.get('mean_circularity', 0.0):.2f} mean circularity). "
-                f"Model consensus is **{agr.get('level', 'LOW')}**. Pathologist correlation recommended."
+                f"Regarding your inquiry ('{question}') on case **{case_result.get('case_id')}**:\n"
+                f"• **AI Prediction:** Predicted tissue class is **{pred.get('class', 'UNKNOWN')}** with **{pred.get('calibrated_confidence', 0.0) * 100.0:.1f}% calibrated confidence** "
+                f"(Tumor Likelihood: {pred.get('tumor_probability', 0.0) * 100.0:.1f}%).\n"
+                f"• **Quantitative Cytopathology:** **{nuc.get('total_count', 0)} nuclei** detected (mean area: {nuc.get('mean_area_px2', 0.0):.1f} px², circularity: {nuc.get('mean_circularity', 0.0):.2f}).\n"
+                f"• **Glandular Architecture:** **{gland.get('total_count', 0)} glands** segmented (mean circularity: {gland.get('mean_circularity', 0.0):.2f}, aspect ratio: {gland.get('mean_aspect_ratio', 1.0):.2f}).\n"
+                f"• **Pathology Interpretation Principle:** Under standard colorectal histopathology guidelines, no individual metric is independently diagnostic; "
+                f"integrated cytological, glandular architectural, and invasion assessment by a qualified pathologist is recommended."
             )
 
         # Anti-hallucination validation check

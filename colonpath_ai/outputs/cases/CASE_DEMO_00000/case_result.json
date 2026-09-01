@@ -1,6 +1,6 @@
 {
   "case_id": "CASE_DEMO_00000",
-  "timestamp": "2026-08-31T09:33:33.244417+00:00",
+  "timestamp": "2026-09-01T03:00:24.414547+00:00",
   "status": "completed",
   "image_quality": {
     "passed": true,
@@ -43,6 +43,9 @@
     "level": "LOW",
     "entropy": -0.0,
     "normalized_entropy": -0.0,
+    "ood_score": 0.0,
+    "ood_status": "IN_DISTRIBUTION",
+    "is_ood": false,
     "review_required": false,
     "message": "AI-assisted classification ready for review."
   },

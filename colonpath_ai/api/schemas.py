@@ -40,6 +40,9 @@ class UncertaintySchema(BaseModel):
     level: str  # "LOW", "MEDIUM", "HIGH"
     entropy: float
     normalized_entropy: float
+    ood_score: float = 0.0
+    ood_status: str = "IN_DISTRIBUTION"
+    is_ood: bool = False
     review_required: bool
     message: str
 

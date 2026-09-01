@@ -1,0 +1,1454 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "COLONPATH-AI Decision Support API",
+    "description": "Multimodal GI Foundation Model & Decision Support System for Colorectal Histopathology",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analyze": {
+      "post": {
+        "tags": [
+          "Analysis"
+        ],
+        "summary": "Analyze Image",
+        "operationId": "analyze_image_analyze_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_analyze_image_analyze_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseResultResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "List Cases",
+        "operationId": "list_cases_cases_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CaseSummaryItem"
+                  },
+                  "title": "Response List Cases Cases Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Case Meta",
+        "operationId": "get_case_meta_cases__case_id__get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Case Meta Cases  Case Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/result": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Case Result",
+        "operationId": "get_case_result_cases__case_id__result_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseResultResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/image": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Case Image",
+        "operationId": "get_case_image_cases__case_id__image_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/visualization/{vis_type}": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Case Visualization",
+        "operationId": "get_case_visualization_cases__case_id__visualization__vis_type__get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "vis_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vis Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/evidence": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Case Evidence",
+        "description": "Returns the deterministic computational evidence payload (evidence.json) for a case.",
+        "operationId": "get_case_evidence_cases__case_id__evidence_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Case Evidence Cases  Case Id  Evidence Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/report": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Case Report",
+        "description": "Returns the structured MedGemma medical explanation report for a case.",
+        "operationId": "get_case_report_cases__case_id__report_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Case Report Cases  Case Id  Report Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/regions": {
+      "get": {
+        "tags": [
+          "Regions"
+        ],
+        "summary": "Get All Regions",
+        "operationId": "get_all_regions_cases__case_id__regions_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegionDetailSchema"
+                  },
+                  "title": "Response Get All Regions Cases  Case Id  Regions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/regions/next": {
+      "get": {
+        "tags": [
+          "Regions"
+        ],
+        "summary": "Get Next Region",
+        "operationId": "get_next_region_cases__case_id__regions_next_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "current_region_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Current Region Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NextRegionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/regions/{region_id}": {
+      "get": {
+        "tags": [
+          "Regions"
+        ],
+        "summary": "Get Region Detail",
+        "operationId": "get_region_detail_cases__case_id__regions__region_id__get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "region_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Region Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegionDetailSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/case/{case_id}/next-region": {
+      "get": {
+        "tags": [
+          "Regions (Android Aliases)"
+        ],
+        "summary": "Get Next Region Alias",
+        "description": "Direct alias for GET /cases/{case_id}/regions/next matching Android Codex prompt specification.",
+        "operationId": "get_next_region_alias_case__case_id__next_region_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "current_region_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Current Region Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NextRegionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/case/{case_id}/regions": {
+      "get": {
+        "tags": [
+          "Regions (Android Aliases)"
+        ],
+        "summary": "Get All Regions Alias",
+        "description": "Direct alias for GET /cases/{case_id}/regions matching Android Codex prompt specification.",
+        "operationId": "get_all_regions_alias_case__case_id__regions_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegionDetailSchema"
+                  },
+                  "title": "Response Get All Regions Alias Case  Case Id  Regions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/review": {
+      "post": {
+        "tags": [
+          "Pathologist Review"
+        ],
+        "summary": "Submit Review",
+        "operationId": "submit_review_cases__case_id__review_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/notes": {
+      "post": {
+        "tags": [
+          "Pathologist Review"
+        ],
+        "summary": "Add Case Note",
+        "operationId": "add_case_note_cases__case_id__notes_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Pathologist Review"
+        ],
+        "summary": "List Case Notes",
+        "operationId": "list_case_notes_cases__case_id__notes_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/feedback": {
+      "post": {
+        "tags": [
+          "Pathologist Review"
+        ],
+        "summary": "Submit Feedback",
+        "description": "Records pathologist validation feedback (CORRECT, INCORRECT, UNCERTAIN, REVIEW_REQUIRED).",
+        "operationId": "submit_feedback_cases__case_id__feedback_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/copilot/ask": {
+      "post": {
+        "tags": [
+          "Pathologist Copilot & MedGemma"
+        ],
+        "summary": "Ask Copilot",
+        "description": "Queries Google MedGemma 1.5 4B IT / Pathologist Copilot regarding computational case evidence.",
+        "operationId": "ask_copilot_copilot_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopilotQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopilotAnswerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viewer": {
+      "get": {
+        "summary": "Root Dashboard",
+        "operationId": "root_dashboard_viewer_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root Dashboard",
+        "operationId": "root_dashboard__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_analyze_image_analyze_post": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Image",
+            "description": "H&E Histopathology image (PNG, JPG, BMP, TIF)"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id",
+            "description": "Optional Case Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image"
+        ],
+        "title": "Body_analyze_image_analyze_post"
+      },
+      "CaseResultResponse": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "image_quality": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Image Quality"
+          },
+          "digepath": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Digepath"
+          },
+          "prediction": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Prediction"
+          },
+          "uncertainty": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Uncertainty"
+          },
+          "model_agreement": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Model Agreement"
+          },
+          "nuclear_evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Nuclear Evidence"
+          },
+          "gland_evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Gland Evidence"
+          },
+          "reference_comparison": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Reference Comparison"
+          },
+          "priority_regions": {
+            "items": {
+              "$ref": "#/components/schemas/RegionDetailSchema"
+            },
+            "type": "array",
+            "title": "Priority Regions"
+          },
+          "visualizations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Visualizations"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "timestamp",
+          "status",
+          "image_quality",
+          "digepath",
+          "prediction",
+          "uncertainty",
+          "model_agreement",
+          "nuclear_evidence",
+          "gland_evidence",
+          "reference_comparison",
+          "priority_regions"
+        ],
+        "title": "CaseResultResponse"
+      },
+      "CaseSummaryItem": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "prediction_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prediction Class"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "uncertainty_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uncertainty Level"
+          },
+          "review_status": {
+            "type": "string",
+            "title": "Review Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "timestamp",
+          "review_status"
+        ],
+        "title": "CaseSummaryItem"
+      },
+      "CopilotAnswerResponse": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "selected_region_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Region Id"
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "validated": {
+            "type": "boolean",
+            "title": "Validated"
+          },
+          "validation_errors": {
+            "items": {},
+            "type": "array",
+            "title": "Validation Errors",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "question",
+          "answer",
+          "model",
+          "validated"
+        ],
+        "title": "CopilotAnswerResponse"
+      },
+      "CopilotQuestionRequest": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id",
+            "description": "Target Case ID (e.g. CASE_DEMO_00000)"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question",
+            "description": "Pathologist clinical inquiry"
+          },
+          "region_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region Id",
+            "description": "Optional focused region ID (e.g. R_01)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "question"
+        ],
+        "title": "CopilotQuestionRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "device": {
+            "type": "string",
+            "title": "Device"
+          },
+          "models_ready": {
+            "type": "boolean",
+            "title": "Models Ready"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "version",
+          "device",
+          "models_ready"
+        ],
+        "title": "HealthResponse"
+      },
+      "NextRegionResponse": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "region": {
+            "$ref": "#/components/schemas/RegionDetailSchema"
+          },
+          "navigation": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Navigation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "region",
+          "navigation"
+        ],
+        "title": "NextRegionResponse"
+      },
+      "NoteRequest": {
+        "properties": {
+          "note_text": {
+            "type": "string",
+            "title": "Note Text"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author",
+            "default": "Pathologist"
+          }
+        },
+        "type": "object",
+        "required": [
+          "note_text"
+        ],
+        "title": "NoteRequest"
+      },
+      "RegionDetailSchema": {
+        "properties": {
+          "region_id": {
+            "type": "string",
+            "title": "Region Id"
+          },
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "x": {
+            "type": "integer",
+            "title": "X"
+          },
+          "y": {
+            "type": "integer",
+            "title": "Y"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "prediction": {
+            "type": "string",
+            "title": "Prediction"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "tumor_probability": {
+            "type": "number",
+            "title": "Tumor Probability"
+          },
+          "uncertainty_score": {
+            "type": "number",
+            "title": "Uncertainty Score"
+          },
+          "uncertainty_level": {
+            "type": "string",
+            "title": "Uncertainty Level"
+          },
+          "priority_score": {
+            "type": "number",
+            "title": "Priority Score"
+          },
+          "priority_level": {
+            "type": "string",
+            "title": "Priority Level"
+          },
+          "priority_label": {
+            "type": "string",
+            "title": "Priority Label"
+          },
+          "nuclei_count": {
+            "type": "integer",
+            "title": "Nuclei Count"
+          },
+          "glands_count": {
+            "type": "integer",
+            "title": "Glands Count"
+          },
+          "agreement_level": {
+            "type": "string",
+            "title": "Agreement Level"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale"
+          }
+        },
+        "type": "object",
+        "required": [
+          "region_id",
+          "index",
+          "x",
+          "y",
+          "width",
+          "height",
+          "prediction",
+          "confidence",
+          "tumor_probability",
+          "uncertainty_score",
+          "uncertainty_level",
+          "priority_score",
+          "priority_level",
+          "priority_label",
+          "nuclei_count",
+          "glands_count",
+          "agreement_level",
+          "rationale"
+        ],
+        "title": "RegionDetailSchema"
+      },
+      "ReviewRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "MARK_REVIEWED, FLAG_REGION, ADD_NOTE, REQUEST_REANALYSIS"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "default": ""
+          },
+          "pathologist_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pathologist Id",
+            "default": "Dr. Pathologist"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "ReviewRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

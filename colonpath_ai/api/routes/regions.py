@@ -33,3 +33,23 @@ def get_region_detail(case_id: str, region_id: str):
     if not region:
         raise HTTPException(status_code=404, detail=f"Region '{region_id}' not found in case '{case_id}'.")
     return region
+
+
+# Singular URL alias router for Android flexibility
+alias_router = APIRouter(tags=["Regions (Android Aliases)"])
+
+@alias_router.get("/case/{case_id}/next-region", response_model=NextRegionResponse)
+def get_next_region_alias(case_id: str, current_region_id: Optional[str] = Query(None)):
+    """
+    Direct alias for GET /cases/{case_id}/regions/next matching Android Codex prompt specification.
+    """
+    return get_next_region(case_id=case_id, current_region_id=current_region_id)
+
+
+@alias_router.get("/case/{case_id}/regions", response_model=List[RegionDetailSchema])
+def get_all_regions_alias(case_id: str):
+    """
+    Direct alias for GET /cases/{case_id}/regions matching Android Codex prompt specification.
+    """
+    return get_all_regions(case_id=case_id)
+
