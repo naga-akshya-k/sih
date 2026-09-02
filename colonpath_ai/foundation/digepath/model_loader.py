@@ -5,6 +5,7 @@ Loads the ViT-L/16 GI foundation model for colorectal histopathology embedding e
 
 import os
 import logging
+from pathlib import Path
 from typing import Optional, Dict, Any, Tuple
 import torch
 import torch.nn as nn
@@ -52,28 +53,50 @@ class DigepathModelLoader:
         model = None
         source = "hf_hub"
 
-        # 1. Attempt HuggingFace load if token or local cache is present
-        try:
-            logger.info(f"Attempting to load Digepath from {DIGEPATH_HF_REPO}...")
-            model = timm.create_model(
-                f"hf_hub:{DIGEPATH_HF_REPO}",
-                pretrained=True,
-                num_classes=0,
-                token=hf_token,
-            )
-            source = f"HuggingFace ({DIGEPATH_HF_REPO})"
-            logger.info("Successfully loaded Digepath pretrained foundation weights.")
-        except Exception as e:
-            logger.warning(
-                f"Could not load directly from {DIGEPATH_HF_REPO} ({type(e).__name__}: {e}). "
-                f"Initializing ViT-L/16 backbone architecture (embed_dim={EMBEDDING_DIM})."
-            )
-            model = timm.create_model(
-                DIGEPATH_BACKBONE_NAME,
-                pretrained=False,
-                num_classes=0,
-            )
-            source = f"ViT-L/16 Backbone ({DIGEPATH_BACKBONE_NAME})"
+        # 1. Attempt loading directly from local HuggingFace cache if present
+        cache_hub = Path.home() / ".cache" / "huggingface" / "hub" / f"models--{DIGEPATH_HF_REPO.replace('/', '--')}"
+        local_safetensor = None
+        if cache_hub.exists():
+            for sf in cache_hub.rglob("*.safetensors"):
+                if sf.is_file() and sf.stat().st_size > 500 * 1024 * 1024:
+                    local_safetensor = sf
+                    break
+
+        if local_safetensor and local_safetensor.exists():
+            try:
+                from safetensors.torch import load_file
+                logger.info(f"Loading Digepath weights directly from local cache: {local_safetensor.name}")
+                model = timm.create_model(DIGEPATH_BACKBONE_NAME, pretrained=False, num_classes=0)
+                state_dict = load_file(str(local_safetensor))
+                model.load_state_dict(state_dict, strict=False)
+                source = f"Local Safetensors ({DIGEPATH_HF_REPO})"
+                logger.info("Successfully loaded Digepath foundation weights from local snapshot.")
+            except Exception as e:
+                logger.warning(f"Failed loading local safetensors ({e}), falling back to hub create_model.")
+                model = None
+
+        if model is None:
+            try:
+                logger.info(f"Attempting to load Digepath from {DIGEPATH_HF_REPO}...")
+                model = timm.create_model(
+                    f"hf_hub:{DIGEPATH_HF_REPO}",
+                    pretrained=True,
+                    num_classes=0,
+                    token=hf_token,
+                )
+                source = f"HuggingFace ({DIGEPATH_HF_REPO})"
+                logger.info("Successfully loaded Digepath pretrained foundation weights.")
+            except Exception as e:
+                logger.warning(
+                    f"Could not load directly from {DIGEPATH_HF_REPO} ({type(e).__name__}: {e}). "
+                    f"Initializing ViT-L/16 backbone architecture (embed_dim={EMBEDDING_DIM})."
+                )
+                model = timm.create_model(
+                    DIGEPATH_BACKBONE_NAME,
+                    pretrained=False,
+                    num_classes=0,
+                )
+                source = f"ViT-L/16 Backbone ({DIGEPATH_BACKBONE_NAME})"
 
         # Freeze all weights - Digepath is used as a frozen feature extractor
         for param in model.parameters():
